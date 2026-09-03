@@ -19,10 +19,10 @@ SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 if SCRIPTS_DIR not in sys.path:
     sys.path.insert(0, SCRIPTS_DIR)
 
-from vt_paths import ENV_FILE, OUTPUT_DIR_ENV, SKILL_DIR, load_dotenv, resolve_output_dir  # noqa: E402
+from vt_paths import ENV_FILE, OUTPUT_DIR_ENV, SKILL_DIR, final_dir, load_dotenv, work_dir  # noqa: E402
 
 load_dotenv(ENV_FILE)
-DEFAULT_OUTPUT_DIR = resolve_output_dir()
+DEFAULT_OUTPUT_DIR = work_dir()
 CACHE_INDEX = os.path.join(DEFAULT_OUTPUT_DIR, ".cache", "index.json")
 WORK_DIR = "/tmp/video-transcript"
 FUNASR_HOTWORD = os.getenv("FUNASR_HOTWORD") or None
@@ -708,7 +708,7 @@ def acquire_wav(input_path, meta, wav_path, keep_video=False):
     return wav_path, video_path
 
 
-def emit_cache_hit(hit):
+def emit_cache_hit(hit, output_dir=None):
     print("[OK] 缓存命中,跳过下载/转录", file=sys.stderr)
     print(f"  预整理: {hit.get('preorganized_path')}", file=sys.stderr)
     if hit.get("transcript_path"):
@@ -718,7 +718,7 @@ def emit_cache_hit(hit):
         with open(pre, encoding="utf-8") as f:
             print(f.read())
     print("----- VT_OUTPUTS -----", file=sys.stderr)
-    print(json.dumps({"cache": True, **hit}, ensure_ascii=False), file=sys.stderr)
+    print(json.dumps({"cache": True, **hit, "final_dir": final_dir(output_dir)}, ensure_ascii=False), file=sys.stderr)
 
 
 PODCAST_MODE = "podcast_speakers"
@@ -784,12 +784,13 @@ def run_podcast(input_path, title=None, output_dir=None, save_md=True,
         print("[ERROR] ffmpeg 未安装!请运行: brew install ffmpeg", file=sys.stderr)
         sys.exit(1)
     if use_cache and not reformat and cache_lookup(input_path, PODCAST_MODE):
-        emit_cache_hit(cache_lookup(input_path, PODCAST_MODE))
+        emit_cache_hit(cache_lookup(input_path, PODCAST_MODE), output_dir)
         return
 
     from podcast_extractor import extract_episode, is_xiaoyuzhou_episode
 
-    out_dir = resolve_output_dir(output_dir)
+    out_dir = DEFAULT_OUTPUT_DIR
+    fin_dir = final_dir(output_dir)
     work_dir = os.path.join(out_dir, ".partial", cache_key(input_path, PODCAST_MODE))
     asr_json = os.path.join(work_dir, "transcription.json")
 
@@ -981,7 +982,8 @@ def run_podcast(input_path, title=None, output_dir=None, save_md=True,
     if save_md:
         os.makedirs(out_dir, exist_ok=True)
         stem = f"{time.strftime('%Y-%m-%d')}_{safe_filename(title or 'podcast', 30)}"
-        md_file = os.path.join(out_dir, f"{stem}_逐字稿.md")
+        os.makedirs(fin_dir, exist_ok=True)
+        md_file = os.path.join(fin_dir, f"{stem}_逐字稿.md")
         with open(md_file, "w", encoding="utf-8") as f:
             f.write(md)
         print(f"\n[OK] 逐字稿: {md_file}", file=sys.stderr)
@@ -1008,6 +1010,7 @@ def run_podcast(input_path, title=None, output_dir=None, save_md=True,
             "created_at": gen_date,
             "source_url": normalize_input(input_path) if is_url(input_path) else input_path,
             "mode": PODCAST_MODE,
+            "final_dir": fin_dir,
         }
         sidecar = os.path.join(out_dir, f"{stem}_outputs.json")
         with open(sidecar, "w", encoding="utf-8") as f:
@@ -1017,7 +1020,7 @@ def run_podcast(input_path, title=None, output_dir=None, save_md=True,
         try:
             html_str = md_to_html(md, download_name=os.path.basename(md_file))
             if html_str:
-                with open(os.path.splitext(md_file)[0] + ".html", "w", encoding="utf-8") as f:
+                with open(os.path.join(out_dir, f"{stem}_逐字稿.html"), "w", encoding="utf-8") as f:
                     f.write(html_str)
         except Exception:
             pass
@@ -1035,7 +1038,7 @@ def run(input_path, title=None, output_dir=None, save_md=True, use_cache=True, k
         sys.exit(1)
 
     if use_cache and cache_lookup(input_path):
-        emit_cache_hit(cache_lookup(input_path))
+        emit_cache_hit(cache_lookup(input_path), output_dir)
         return
 
     kickoff_asr_daemon(use_daemon)
@@ -1077,7 +1080,8 @@ def run(input_path, title=None, output_dir=None, save_md=True, use_cache=True, k
         meta["duration"] = int(wav_dur)
     print(f"[INFO] 音频 {os.path.getsize(wav_path)/1024/1024:.1f}MB / {fmt_duration_human(duration)}", file=sys.stderr)
 
-    out_dir = resolve_output_dir(output_dir)
+    out_dir = DEFAULT_OUTPUT_DIR
+    fin_dir = final_dir(output_dir)
     os.makedirs(out_dir, exist_ok=True)
     name_seed = title or Path(wav_path).stem
     date_prefix = time.strftime("%Y-%m-%d")
@@ -1146,6 +1150,7 @@ def run(input_path, title=None, output_dir=None, save_md=True, use_cache=True, k
             "created_at": gen_date,
             "source_url": normalize_input(input_path),
             "video_path": video_path if keep_video and video_path else None,
+            "final_dir": fin_dir,
         }
         sidecar = os.path.join(out_dir, f"{stem}_outputs.json")
         with open(sidecar, "w", encoding="utf-8") as f:
@@ -1172,8 +1177,9 @@ def doctor(live_wechat_url=None):
     print("=" * 55)
     print("  🩺 video-transcript 体检")
     print("=" * 55)
-    src = f"来自 {OUTPUT_DIR_ENV}" if os.environ.get(OUTPUT_DIR_ENV) else f"默认,可在 .env 设 {OUTPUT_DIR_ENV}"
-    print(f"  ℹ 输出目录: {DEFAULT_OUTPUT_DIR}({src})")
+    src = f"来自 {OUTPUT_DIR_ENV}" if os.environ.get(OUTPUT_DIR_ENV) else f"未设 {OUTPUT_DIR_ENV},与工作目录相同"
+    print(f"  ℹ 成品目录: {final_dir()}({src})")
+    print(f"  ℹ 工作目录: {DEFAULT_OUTPUT_DIR}(原始稿/预整理/brief/html/srt/缓存)")
     issues = []
     if check_ffmpeg():
         print("  ✓ ffmpeg")
@@ -1303,7 +1309,7 @@ def main():
     parser.add_argument("input", nargs="?", help="视频 URL 或本地文件路径")
     parser.add_argument("--title", default=None)
     parser.add_argument("--no-save", dest="save_md", action="store_false")
-    parser.add_argument("--output-dir", default=None)
+    parser.add_argument("--output-dir", default=None, help="临时指定成品目录(最终 Markdown 存放处);长期改用 .env 的 VT_OUTPUT_DIR")
     parser.add_argument("--doctor", action="store_true")
     parser.add_argument("--doctor-live", metavar="WECHAT_URL",
                         help="体检并用一个公开视频号链接验证认证→解析→媒体流")

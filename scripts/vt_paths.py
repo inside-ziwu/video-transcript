@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""skill 根目录、.env 与输出目录的统一解析。
+"""skill 根目录、.env、工作目录与成品目录的统一解析。
 
-优先级:命令行 --output-dir > 环境变量 / .env 里的 VT_OUTPUT_DIR > $VT_HOME/outputs
+工作目录固定为 $VT_HOME/outputs:原始稿、预整理稿、brief、html、srt、缓存索引、分块目录都在这里。
+成品目录只放最终 Markdown / PDF。优先级:命令行 --output-dir > 环境变量 / .env 的 VT_OUTPUT_DIR > 工作目录。
 """
 import os
 
@@ -26,10 +27,14 @@ def load_dotenv(path=ENV_FILE):
             os.environ.setdefault(k, v)
 
 
-def resolve_output_dir(cli_value=None):
-    """返回绝对路径;支持 ~ 与 $VAR。"""
-    raw = cli_value or os.environ.get(OUTPUT_DIR_ENV) or ""
-    raw = raw.strip()
+def work_dir():
+    """过程文件目录,固定在 skill 目录下。"""
+    return os.path.join(SKILL_DIR, "outputs")
+
+
+def final_dir(cli_value=None):
+    """成品目录;返回绝对路径,支持 ~ 与 $VAR;未配置时等于工作目录。"""
+    raw = (cli_value or os.environ.get(OUTPUT_DIR_ENV) or "").strip()
     if not raw:
-        return os.path.join(SKILL_DIR, "outputs")
+        return work_dir()
     return os.path.abspath(os.path.expanduser(os.path.expandvars(raw)))

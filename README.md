@@ -10,7 +10,7 @@
 
 > 这个 Skill 是 [黄叔开源系列](https://github.com/Backtthefuture/huangshu) 之一。想系统学 Agent、少一个人摸索，看文末 [加入社群](#加入黄叔和唯庸的-agent-实战社群)。
 >
-> 本仓库是 [Backtthefuture/video-transcript](https://github.com/Backtthefuture/video-transcript) 的 fork，新增 `.env` 里 `VT_OUTPUT_DIR` 配置输出目录，其余与上游保持同步。
+> 本仓库是 [Backtthefuture/video-transcript](https://github.com/Backtthefuture/video-transcript) 的 fork，新增 `.env` 里 `VT_OUTPUT_DIR` 指定最终稿的成品目录（过程文件仍留在 `outputs/`），其余与上游保持同步。
 
 ---
 
@@ -209,13 +209,13 @@ python3 ~/.claude/skills/video-transcript/scripts/transcript.py --doctor-live "<
 非常感谢曲老师邀请。我是孟繁青，同时也是 Evolving 这边的联创。
 ```
 
-文件默认写在 `~/.claude/skills/video-transcript/outputs/`。想固定存到别处，在 skill 目录的 `.env` 里加一行（支持 `~`）：
+文件默认写在 `~/.claude/skills/video-transcript/outputs/`。想让最终稿固定存到别处（比如笔记库），在 skill 目录的 `.env` 里加一行（支持 `~`）：
 
 ```bash
 VT_OUTPUT_DIR=~/Documents/逐字稿
 ```
 
-临时改一次用 `--output-dir`。`--doctor` 会打印当前生效的输出目录。
+只有最终 Markdown / PDF（整理优化版、播客逐字稿、视频号口语稿）会存到这里；原始稿、预整理稿、brief、html、srt 和缓存仍留在 `outputs/`。临时改一次用 `--output-dir`。`--doctor` 会打印两个目录。
 
 ---
 
@@ -225,7 +225,7 @@ VT_OUTPUT_DIR=~/Documents/逐字稿
 |---|---|
 | `input` | 链接或本地路径（`--doctor` 时不需要） |
 | `--title` | 覆盖自动探测到的标题 |
-| `--output-dir` | 临时改输出目录（长期改用 `.env` 的 `VT_OUTPUT_DIR`） |
+| `--output-dir` | 临时改成品目录（长期改用 `.env` 的 `VT_OUTPUT_DIR`） |
 | `--speakers` | 强制说话人分离（播客单集会自动启用） |
 | `--host` / `--guest` | 指定主持人 / 嘉宾姓名 |
 | `--reformat` | 复用已有识别结果，只重跑后处理 |

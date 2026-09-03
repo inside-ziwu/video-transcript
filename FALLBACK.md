@@ -216,4 +216,4 @@ python3 ~/.claude/skills/video-transcript/scripts/transcript.py \
   --title "从浏览器页面标题获取的视频标题"
 ```
 
-> 注：本 skill 输出目录默认 `./outputs/`（可用 `.env` 的 `VT_OUTPUT_DIR` 改），且只产出 Markdown 逐字稿（无 HTML 报告）。
+> 注：本 skill 输出目录默认 `./outputs/`（最终稿可用 `.env` 的 `VT_OUTPUT_DIR` 改到别处），且只产出 Markdown 逐字稿（无 HTML 报告）。

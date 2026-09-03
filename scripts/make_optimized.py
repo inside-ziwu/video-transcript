@@ -19,10 +19,10 @@ import sys
 _SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 if _SCRIPTS_DIR not in sys.path:
     sys.path.insert(0, _SCRIPTS_DIR)
-from vt_paths import ENV_FILE, load_dotenv, resolve_output_dir  # noqa: E402
+from vt_paths import ENV_FILE, final_dir, load_dotenv, work_dir  # noqa: E402
 
 load_dotenv(ENV_FILE)
-DEFAULT_OUT = resolve_output_dir()
+DEFAULT_OUT = final_dir()
 
 SEC_HEADER_RE = re.compile(
     r"^##\s*(\d+)[\.、\)\s]\s*(.*?)\s*\[\s*(\d{1,2}:\d{2})\s*[-–~]\s*(\d{1,2}:\d{2})\s*\]\s*$"
@@ -346,8 +346,10 @@ def default_filename(title):
     return f"{date}_{safe[:30]}_整理优化版"
 
 
-def write_outputs(content, out_dir, filename=None):
+def write_outputs(content, out_dir, filename=None, html_dir=None):
+    html_dir = html_dir or out_dir
     os.makedirs(out_dir, exist_ok=True)
+    os.makedirs(html_dir, exist_ok=True)
     filename = filename or content.get("filename") or default_filename(content.get("title"))
     if filename.endswith(".md"):
         filename = filename[:-3]
@@ -356,7 +358,7 @@ def write_outputs(content, out_dir, filename=None):
     md_text = build_md(content)
     page = build_html(content, md_text, fn_md)
     md_path = os.path.join(out_dir, fn_md)
-    html_path = os.path.join(out_dir, fn_html)
+    html_path = os.path.join(html_dir, fn_html)
     with open(md_path, "w", encoding="utf-8") as f:
         f.write(md_text)
     with open(html_path, "w", encoding="utf-8") as f:
@@ -370,7 +372,7 @@ def main():
     ap.add_argument("--from-md", dest="from_md", help="预整理/整理优化版 markdown")
     ap.add_argument("--patch", help="LLM 增量 patch.json,配合 --from-md")
     ap.add_argument("--filename", default=None, help="输出文件名(不含扩展名)")
-    ap.add_argument("--output-dir", default=DEFAULT_OUT)
+    ap.add_argument("--output-dir", default=DEFAULT_OUT, help="成品目录(.md 存放处);.html 固定写到工作目录 outputs/")
     ap.add_argument("--dump-template", action="store_true", help="输出 content.json 骨架模板")
     args = ap.parse_args()
 
@@ -399,7 +401,7 @@ def main():
             content = apply_patch(content, patch)
         if args.filename:
             content["filename"] = args.filename
-        md_path, html_path, md_text = write_outputs(content, resolve_output_dir(args.output_dir), args.filename)
+        md_path, html_path, md_text = write_outputs(content, final_dir(args.output_dir), args.filename, html_dir=work_dir())
         print("OK ->", md_path)
         print("OK ->", html_path)
         print("MD chars:", len(md_text))
@@ -411,7 +413,7 @@ def main():
     with open(args.content, encoding="utf-8") as f:
         c = json.load(f)
 
-    md_path, html_path, md_text = write_outputs(c, resolve_output_dir(args.output_dir), c.get("filename"))
+    md_path, html_path, md_text = write_outputs(c, final_dir(args.output_dir), c.get("filename"), html_dir=work_dir())
     print("OK ->", md_path)
     print("OK ->", html_path)
     print("MD chars:", len(md_text))

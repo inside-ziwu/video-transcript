@@ -137,7 +137,7 @@ if [ ! -f "$ENV_FILE" ]; then
 # 例:FUNASR_HOTWORD=玉伯 优麦 YouMind WorkBuddy Codex
 # FUNASR_HOTWORD=
 
-# 可选:逐字稿保存目录(支持 ~),不设则存到 skill 目录的 outputs/
+# 可选:成品目录(支持 ~),只放最终 Markdown/PDF;原始稿/预整理/缓存固定在 skill 目录的 outputs/;不设则一并存 outputs/
 # 例:VT_OUTPUT_DIR=~/Documents/逐字稿
 # VT_OUTPUT_DIR=
 EOF
