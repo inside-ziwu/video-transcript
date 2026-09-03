@@ -190,10 +190,10 @@ python3 ~/.claude/skills/video-transcript/scripts/transcript.py --doctor-live "<
 
 > 时长 5:32 | 来源: <URL> | 引擎: FunASR(SenseVoice-Small)
 
-## 1. 引入话题 [00:00 - 00:42]
+## 1. 引入话题
 大家好，今天我们要聊的是...
 
-## 2. 核心观点 [00:42 - 02:15]
+## 2. 核心观点
 那么我的看法是这样的，首先...
 ```
 

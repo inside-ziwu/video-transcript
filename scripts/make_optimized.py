@@ -44,10 +44,10 @@ def build_md(c):
     lines.append("> 说明: 在逐字稿基础上补标点、合并碎句、修正识别错误，保留原话原意；个别存疑处标〔?〕，详见文末对照表\n")
     lines.append("## 目录\n")
     for i, s in enumerate(c["sections"], 1):
-        lines.append(f"{i}. {s['heading']} [{s['start']}]")
+        lines.append(f"{i}. {s['heading']}")
     lines.append("")
     for i, s in enumerate(c["sections"], 1):
-        lines.append(f"## {i}. {s['heading']} [{s['start']} - {s['end']}]\n")
+        lines.append(f"## {i}. {s['heading']}\n")
         for p in s.get("paras") or []:
             lines.append(p + "\n")
     lines.append("---\n")
@@ -69,10 +69,10 @@ def build_html(c, md_text, fn_md):
     art.append("</blockquote>")
     art.append("<h2>目录</h2><ol>")
     for i, s in enumerate(c["sections"], 1):
-        art.append(f"<li>{esc(s['heading'])} [{s['start']}]</li>")
+        art.append(f"<li>{esc(s['heading'])}</li>")
     art.append("</ol>")
     for i, s in enumerate(c["sections"], 1):
-        art.append(f"<h2>{i}. {esc(s['heading'])} [{s['start']} - {s['end']}]</h2>")
+        art.append(f"<h2>{i}. {esc(s['heading'])}</h2>")
         for p in s.get("paras") or []:
             art.append(f"<p>{esc(p)}</p>")
     art.append("<hr>")

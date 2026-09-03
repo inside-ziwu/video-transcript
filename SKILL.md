@@ -323,7 +323,7 @@ agent 拿到播客 `*_逐字稿.md` 后:**直接在对话里输出全文**(或�
 - 播客引擎 paraformer-zh + fsmn-vad + ct-punc + CAM++:带说话人分离,约 0.15x 实时
 - 视频号不再 probe+download 各解析一遍;默认也不下完整视频
 - FunASR daemon 常驻后,后续任务跳过 15~30s 模型加载;空闲 30 分钟自动退出
-- 时间戳是段落级,用于章节定位
+- 时间戳只在工作目录的原始稿 / 预整理稿里(段落级,供边转边改时定位);成品整理优化版与视频号口语稿不带时间戳
 - 预估耗时:`时长/8 + 15s`(直链音频 + 已预热模型)
 - 热词:`$VT_HOME/.env` 里 `FUNASR_HOTWORD=词1 词2`
 - 成品目录:`$VT_HOME/.env` 里 `VT_OUTPUT_DIR=~/逐字稿`(支持 `~`),只放最终 Markdown / PDF(整理优化版、播客逐字稿、视频号口语稿);原始稿、预整理、brief、html、srt、`.cache`、`.partial` 固定在 `$VT_HOME/outputs`;不设则两者相同;`--doctor` 会打印两个目录
