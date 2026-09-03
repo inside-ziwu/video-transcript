@@ -2,7 +2,7 @@
 # video-transcript skill 一行命令安装入口
 #
 # 用法:
-#   bash <(curl -fsSL https://raw.githubusercontent.com/Backtthefuture/video-transcript/main/bootstrap.sh)
+#   bash <(curl -fsSL https://raw.githubusercontent.com/inside-ziwu/video-transcript/main/bootstrap.sh)
 #
 # 流程: 拉 skill 文件 → 跑 install.sh(装系统依赖 + FunASR 转录引擎)
 #
@@ -10,7 +10,7 @@
 
 set -euo pipefail
 
-REPO="Backtthefuture/video-transcript"
+REPO="inside-ziwu/video-transcript"
 SKILL="video-transcript"
 TARGET="${VIDEO_TRANSCRIPT_TARGET:-$HOME/.claude/skills/$SKILL}"
 

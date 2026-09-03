@@ -9,6 +9,8 @@
 - **本地文件**：`mp4` / `m4a` / `mp3` / `wav` 同样能转
 
 > 这个 Skill 是 [黄叔开源系列](https://github.com/Backtthefuture/huangshu) 之一。想系统学 Agent、少一个人摸索，看文末 [加入社群](#加入黄叔和唯庸的-agent-实战社群)。
+>
+> 本仓库是 [Backtthefuture/video-transcript](https://github.com/Backtthefuture/video-transcript) 的 fork，新增 `.env` 里 `VT_OUTPUT_DIR` 配置输出目录，其余与上游保持同步。
 
 ---
 
@@ -79,7 +81,7 @@ PDF 用 [Kami](https://github.com/tw93/Kami) 羊皮纸长文排。文件名用�
 macOS 复制这一行到终端，回车，跟着提示走：
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/Backtthefuture/video-transcript/main/bootstrap.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/inside-ziwu/video-transcript/main/bootstrap.sh)
 ```
 
 它会：把 Skill 装到 `~/.claude/skills/video-transcript/`，检查 ffmpeg，安装 `yt-dlp` / Playwright / Chromium，装 FunASR，并把配套的 `video-download` 放在同一个 skills 根目录。重复执行会从 GitHub main 更新程序文件，同时保留 `.env`、`outputs/` 和本地词表。
@@ -88,7 +90,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Backtthefuture/video-transcr
 
 ```bash
 VIDEO_TRANSCRIPT_TARGET="$HOME/.agents/skills/video-transcript" \
-  bash <(curl -fsSL https://raw.githubusercontent.com/Backtthefuture/video-transcript/main/bootstrap.sh)
+  bash <(curl -fsSL https://raw.githubusercontent.com/inside-ziwu/video-transcript/main/bootstrap.sh)
 ```
 
 装完后在 Claude Code / Codex 里就可以：
@@ -101,7 +103,7 @@ VIDEO_TRANSCRIPT_TARGET="$HOME/.agents/skills/video-transcript" \
 <summary>已经会装 Skill 的人：两步装</summary>
 
 ```bash
-npx skills add Backtthefuture/video-transcript -a claude-code -g -y
+npx skills add inside-ziwu/video-transcript -a claude-code -g -y
 bash ~/.claude/skills/video-transcript/install.sh
 ```
 
