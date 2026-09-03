@@ -16,7 +16,13 @@ import os
 import re
 import sys
 
-DEFAULT_OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "outputs")
+_SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
+if _SCRIPTS_DIR not in sys.path:
+    sys.path.insert(0, _SCRIPTS_DIR)
+from vt_paths import ENV_FILE, load_dotenv, resolve_output_dir  # noqa: E402
+
+load_dotenv(ENV_FILE)
+DEFAULT_OUT = resolve_output_dir()
 
 SEC_HEADER_RE = re.compile(
     r"^##\s*(\d+)[\.、\)\s]\s*(.*?)\s*\[\s*(\d{1,2}:\d{2})\s*[-–~]\s*(\d{1,2}:\d{2})\s*\]\s*$"
@@ -393,7 +399,7 @@ def main():
             content = apply_patch(content, patch)
         if args.filename:
             content["filename"] = args.filename
-        md_path, html_path, md_text = write_outputs(content, os.path.abspath(args.output_dir), args.filename)
+        md_path, html_path, md_text = write_outputs(content, resolve_output_dir(args.output_dir), args.filename)
         print("OK ->", md_path)
         print("OK ->", html_path)
         print("MD chars:", len(md_text))
@@ -405,7 +411,7 @@ def main():
     with open(args.content, encoding="utf-8") as f:
         c = json.load(f)
 
-    md_path, html_path, md_text = write_outputs(c, os.path.abspath(args.output_dir), c.get("filename"))
+    md_path, html_path, md_text = write_outputs(c, resolve_output_dir(args.output_dir), c.get("filename"))
     print("OK ->", md_path)
     print("OK ->", html_path)
     print("MD chars:", len(md_text))

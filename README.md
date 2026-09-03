@@ -207,7 +207,13 @@ python3 ~/.claude/skills/video-transcript/scripts/transcript.py --doctor-live "<
 非常感谢曲老师邀请。我是孟繁青，同时也是 Evolving 这边的联创。
 ```
 
-文件默认写在 `~/.claude/skills/video-transcript/outputs/`。
+文件默认写在 `~/.claude/skills/video-transcript/outputs/`。想固定存到别处，在 skill 目录的 `.env` 里加一行（支持 `~`）：
+
+```bash
+VT_OUTPUT_DIR=~/Documents/逐字稿
+```
+
+临时改一次用 `--output-dir`。`--doctor` 会打印当前生效的输出目录。
 
 ---
 
@@ -217,7 +223,7 @@ python3 ~/.claude/skills/video-transcript/scripts/transcript.py --doctor-live "<
 |---|---|
 | `input` | 链接或本地路径（`--doctor` 时不需要） |
 | `--title` | 覆盖自动探测到的标题 |
-| `--output-dir` | 改输出目录 |
+| `--output-dir` | 临时改输出目录（长期改用 `.env` 的 `VT_OUTPUT_DIR`） |
 | `--speakers` | 强制说话人分离（播客单集会自动启用） |
 | `--host` / `--guest` | 指定主持人 / 嘉宾姓名 |
 | `--reformat` | 复用已有识别结果，只重跑后处理 |

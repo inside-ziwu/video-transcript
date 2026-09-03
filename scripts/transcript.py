@@ -15,33 +15,16 @@ import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
-SKILL_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_OUTPUT_DIR = os.path.join(SKILL_DIR, "outputs")
-ENV_FILE = os.path.join(SKILL_DIR, ".env")
-CACHE_INDEX = os.path.join(DEFAULT_OUTPUT_DIR, ".cache", "index.json")
-WORK_DIR = "/tmp/video-transcript"
-
 if SCRIPTS_DIR not in sys.path:
     sys.path.insert(0, SCRIPTS_DIR)
 
+from vt_paths import ENV_FILE, OUTPUT_DIR_ENV, SKILL_DIR, load_dotenv, resolve_output_dir  # noqa: E402
 
-def _load_dotenv(path):
-    if not os.path.exists(path):
-        return
-    with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith("#") or "=" not in line:
-                continue
-            k, v = line.split("=", 1)
-            k, v = k.strip(), v.strip()
-            if (v.startswith('"') and v.endswith('"')) or (v.startswith("'") and v.endswith("'")):
-                v = v[1:-1]
-            os.environ.setdefault(k, v)
-
-
-_load_dotenv(ENV_FILE)
+load_dotenv(ENV_FILE)
+DEFAULT_OUTPUT_DIR = resolve_output_dir()
+CACHE_INDEX = os.path.join(DEFAULT_OUTPUT_DIR, ".cache", "index.json")
+WORK_DIR = "/tmp/video-transcript"
 FUNASR_HOTWORD = os.getenv("FUNASR_HOTWORD") or None
 WECHAT_UA = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -806,7 +789,7 @@ def run_podcast(input_path, title=None, output_dir=None, save_md=True,
 
     from podcast_extractor import extract_episode, is_xiaoyuzhou_episode
 
-    out_dir = output_dir or DEFAULT_OUTPUT_DIR
+    out_dir = resolve_output_dir(output_dir)
     work_dir = os.path.join(out_dir, ".partial", cache_key(input_path, PODCAST_MODE))
     asr_json = os.path.join(work_dir, "transcription.json")
 
@@ -1094,7 +1077,7 @@ def run(input_path, title=None, output_dir=None, save_md=True, use_cache=True, k
         meta["duration"] = int(wav_dur)
     print(f"[INFO] 音频 {os.path.getsize(wav_path)/1024/1024:.1f}MB / {fmt_duration_human(duration)}", file=sys.stderr)
 
-    out_dir = output_dir or DEFAULT_OUTPUT_DIR
+    out_dir = resolve_output_dir(output_dir)
     os.makedirs(out_dir, exist_ok=True)
     name_seed = title or Path(wav_path).stem
     date_prefix = time.strftime("%Y-%m-%d")
@@ -1189,6 +1172,8 @@ def doctor(live_wechat_url=None):
     print("=" * 55)
     print("  🩺 video-transcript 体检")
     print("=" * 55)
+    src = f"来自 {OUTPUT_DIR_ENV}" if os.environ.get(OUTPUT_DIR_ENV) else f"默认,可在 .env 设 {OUTPUT_DIR_ENV}"
+    print(f"  ℹ 输出目录: {DEFAULT_OUTPUT_DIR}({src})")
     issues = []
     if check_ffmpeg():
         print("  ✓ ffmpeg")
