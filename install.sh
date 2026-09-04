@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# video-transcript skill 一键安装向导(macOS)
+# video-transcript skill 一键安装向导(macOS / Linux,含 WSL2)
 # 用法:bash ~/.claude/skills/video-transcript/install.sh
 
 set -euo pipefail
@@ -28,11 +28,22 @@ has_tty(){
     { : </dev/tty; } 2>/dev/null
 }
 
-# ── 仅支持 macOS ───────────────────────────────────────
-if [[ "$(uname)" != "Darwin" ]]; then
-  err "目前只支持 macOS。Linux/Windows 请看 README.md 手动安装。"
-  exit 1
-fi
+# ── 支持 macOS 与 Linux(含 WSL2);Windows 原生请先装 WSL2 ──
+OS="$(uname)"
+case "$OS" in
+  Darwin|Linux) ;;
+  *)
+    err "只支持 macOS 和 Linux(含 WSL2)。Windows 请先安装 WSL2,在 Ubuntu 终端里运行本脚本。"
+    exit 1
+    ;;
+esac
+is_linux(){ [ "$OS" = "Linux" ]; }
+SUDO=""
+[ "$(id -u)" != "0" ] && SUDO="sudo"
+apt_install(){
+  $SUDO apt-get update -qq
+  $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "$@"
+}
 
 # ── 欢迎 ────────────────────────────────────────────────
 bar
@@ -41,7 +52,7 @@ sep
 echo "  把 B 站/抖音/小红书/YouTube/视频号、小宇宙播客转成逐字稿"
 echo "  转录在你电脑本地跑；链接解析需要联网；视频号首次使用需扫码登录腾讯元宝"
 echo ""
-echo "  接下来 7 步,大约 6-12 分钟:"
+echo "  接下来 7 步,大约 6-12 分钟(Linux 会用 sudo 装系统依赖):"
 echo "    [1/7] 检查/安装 ffmpeg(视频处理)"
 echo "    [2/7] 检查 Python 3"
 echo "    [3/7] 装 Python 工具(yt-dlp + playwright)"
@@ -60,6 +71,15 @@ step 1 7 "检查 ffmpeg"
 if command -v ffmpeg >/dev/null 2>&1; then
   FFMPEG_VER=$(ffmpeg -version 2>/dev/null | sed -n '1{s/^ffmpeg version \([^ ]*\).*/\1/;p;}')
   ok "ffmpeg 已装: ${FFMPEG_VER:-unknown}"
+elif is_linux; then
+  if command -v apt-get >/dev/null 2>&1; then
+    info "用 apt 安装 ffmpeg(可能要输一次 sudo 密码)..."
+    apt_install ffmpeg
+    ok "ffmpeg 装好了"
+  else
+    err "非 apt 系 Linux,请先手动安装 ffmpeg 再重跑"
+    exit 1
+  fi
 else
   warn "ffmpeg 未装,需要 Homebrew 帮忙"
   if ! command -v brew >/dev/null 2>&1; then
@@ -93,8 +113,21 @@ if command -v "$PYTHON_BIN" >/dev/null 2>&1 || [ -x "$PYTHON_BIN" ]; then
     exit 1
   fi
 else
-  err "没找到 python3。建议: brew install python@3.12"
+  if is_linux; then
+    err "没找到 python3。建议: sudo apt-get install -y python3 python3-pip"
+  else
+    err "没找到 python3。建议: brew install python@3.12"
+  fi
   exit 1
+fi
+if ! "$PYTHON_BIN" -m pip --version >/dev/null 2>&1; then
+  if is_linux && command -v apt-get >/dev/null 2>&1; then
+    info "缺 pip,用 apt 补装..."
+    apt_install python3-pip
+  else
+    err "python3 没有 pip。macOS 建议: brew install python@3.12"
+    exit 1
+  fi
 fi
 
 # ── Step 3: pip 装 yt-dlp + playwright ─────────────────
@@ -115,15 +148,26 @@ ok "playwright"
 # ── Step 4: chromium ────────────────────────────────────
 step 4 7 "下载 Chromium(playwright 用的浏览器引擎, ~300MB)"
 info "国内网络可能稍慢,大概 1-3 分钟..."
-"$PYTHON_BIN" -m playwright install chromium
+if is_linux; then
+  "$PYTHON_BIN" -m playwright install --with-deps chromium
+else
+  "$PYTHON_BIN" -m playwright install chromium
+fi
 ok "Chromium 装好"
 
 # ── Step 5: funasr 转录引擎 ────────────────────────────
 step 5 7 "安装 FunASR 转录引擎(SenseVoice-Small,约 234M)"
 sep
-info "安装 funasr + torchaudio(纯本地转录,不需要 API Key)..."
-"$PYTHON_BIN" -m pip install "${PIP_FLAGS[@]}" --upgrade funasr torchaudio
-ok "funasr 装好"
+info "安装 torch + torchaudio + funasr(纯本地转录,不需要 API Key)..."
+if is_linux; then
+  # Linux 默认索引会拉 CUDA 大包;WSL2 / 无 GPU 场景用 CPU 版
+  "$PYTHON_BIN" -m pip install "${PIP_FLAGS[@]}" --upgrade torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+  "$PYTHON_BIN" -m pip install "${PIP_FLAGS[@]}" --upgrade funasr
+else
+  "$PYTHON_BIN" -m pip install "${PIP_FLAGS[@]}" --upgrade torch torchaudio funasr
+fi
+"$PYTHON_BIN" -c "import torch, torchaudio, funasr" 2>/dev/null || { err "torch / torchaudio / funasr 导入失败,请把上面的报错发给维护者"; exit 1; }
+ok "torch $("$PYTHON_BIN" -c 'import torch; print(torch.__version__)') + funasr 装好"
 info "视频转录模型 SenseVoice-Small(234M)首次转录时自动下载"
 info "播客说话人分离模型 paraformer/CAM++/VAD/punc(约 1GB)首次转播客时自动下载"
 
@@ -255,7 +299,10 @@ else
       ok "元宝登录态已存在,无需重新扫码"
     else
       echo ""
-      if has_tty; then
+      if is_linux && [ -z "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]; then
+        warn "当前 Linux 没有图形界面,无法弹出扫码窗口(Win11 的 WSLg 支持,Win10 不支持)"
+        warn "以后需要视频号时在有图形界面的环境运行: $RESOLVER_PY $SPH_SCRIPT --login"
+      elif has_tty; then
         info "视频号首次使用需弹出腾讯元宝登录页，请用微信扫码一次"
         info "只保存本机登录态，不把 Cookie 发给第三方 Worker"
         echo ""

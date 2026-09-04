@@ -26,6 +26,7 @@ DEFAULT_OUTPUT_DIR = work_dir()
 CACHE_INDEX = os.path.join(DEFAULT_OUTPUT_DIR, ".cache", "index.json")
 WORK_DIR = "/tmp/video-transcript"
 FUNASR_HOTWORD = os.getenv("FUNASR_HOTWORD") or None
+FFMPEG_HINT = "brew install ffmpeg" if sys.platform == "darwin" else "sudo apt-get install -y ffmpeg"
 WECHAT_UA = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
     "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -781,7 +782,7 @@ def run_podcast(input_path, title=None, output_dir=None, save_md=True,
     用于调版式/改人名，不必重跑十几分钟的 ASR。
     """
     if not check_ffmpeg():
-        print("[ERROR] ffmpeg 未安装!请运行: brew install ffmpeg", file=sys.stderr)
+        print(f"[ERROR] ffmpeg 未安装!请运行: {FFMPEG_HINT}", file=sys.stderr)
         sys.exit(1)
     if use_cache and not reformat and cache_lookup(input_path, PODCAST_MODE):
         emit_cache_hit(cache_lookup(input_path, PODCAST_MODE), output_dir)
@@ -1034,7 +1035,7 @@ def run_podcast(input_path, title=None, output_dir=None, save_md=True,
 
 def run(input_path, title=None, output_dir=None, save_md=True, use_cache=True, keep_video=False, use_daemon=True):
     if not check_ffmpeg():
-        print("[ERROR] ffmpeg 未安装!请运行: brew install ffmpeg", file=sys.stderr)
+        print(f"[ERROR] ffmpeg 未安装!请运行: {FFMPEG_HINT}", file=sys.stderr)
         sys.exit(1)
 
     if use_cache and cache_lookup(input_path):
@@ -1185,13 +1186,13 @@ def doctor(live_wechat_url=None):
         print("  ✓ ffmpeg")
     else:
         print("  ✗ ffmpeg 未安装")
-        issues.append("brew install ffmpeg")
+        issues.append(FFMPEG_HINT)
     try:
         subprocess.run(["ffprobe", "-version"], capture_output=True, check=True)
         print("  ✓ ffprobe")
     except (FileNotFoundError, subprocess.CalledProcessError):
         print("  ✗ ffprobe 未安装")
-        issues.append("brew install ffmpeg")
+        issues.append(FFMPEG_HINT)
     py = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
     print(f"  {'✓' if sys.version_info >= (3, 8) else '✗'} Python {py}")
     if check_ytdlp():
@@ -1232,7 +1233,7 @@ def doctor(live_wechat_url=None):
         print(f"  ✓ funasr({funasr.__version__})")
     except ImportError:
         print("  ✗ funasr 未安装")
-        issues.append("pip install funasr torchaudio")
+        issues.append("pip install torch torchaudio funasr")
     ms_cache = os.path.expanduser("~/.cache/modelscope/models")
     spk_models = ["paraformer", "campplus", "punc_ct-transformer", "fsmn_vad"]
     cached = os.listdir(ms_cache) if os.path.isdir(ms_cache) else []

@@ -156,6 +156,15 @@ class InstallerInvariantTests(unittest.TestCase):
         self.assertIn('VD_TARGET="${VIDEO_DOWNLOAD_HOME:-$(dirname "$SKILL_DIR")/video-download}"', installer)
         self.assertIn("rsync -a --exclude='.git/' --exclude='.env'", installer)
 
+    def test_install_supports_linux_and_keeps_macos_path(self):
+        installer = (ROOT / "install.sh").read_text(encoding="utf-8")
+        self.assertIn("Darwin|Linux) ;;", installer)
+        self.assertIn("download.pytorch.org/whl/cpu", installer)
+        self.assertIn("playwright install --with-deps chromium", installer)
+        self.assertIn("brew install ffmpeg", installer)
+        self.assertIn('"$PYTHON_BIN" -c "import torch, torchaudio, funasr"', installer)
+        self.assertIn("WAYLAND_DISPLAY", installer)
+
     def test_bootstrap_preserves_user_state_on_update(self):
         bootstrap = (ROOT / "bootstrap.sh").read_text(encoding="utf-8")
         self.assertNotIn('rm -rf "$TARGET"', bootstrap)

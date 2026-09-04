@@ -86,6 +86,8 @@ bash <(curl -fsSL https://raw.githubusercontent.com/inside-ziwu/video-transcript
 
 它会：把 Skill 装到 `~/.claude/skills/video-transcript/`，检查 ffmpeg，安装 `yt-dlp` / Playwright / Chromium，装 FunASR，并把配套的 `video-download` 放在同一个 skills 根目录。重复执行会从 GitHub main 更新程序文件，同时保留 `.env`、`outputs/` 和本地词表。
 
+Linux（含 Windows 的 WSL2）同样用这一条命令，脚本会用 apt 装 ffmpeg 和 pip，torch 装 CPU 版。Windows 用户先在 PowerShell 里执行 `wsl --install -d Ubuntu`，重启后在 Ubuntu 终端里装好 Claude Code 或 Codex，再运行上面的命令。视频号扫码需要图形界面：Win11 的 WSLg 可以弹窗，Win10 不行。
+
 要安装到其他 Agent 目录，可显式指定目标，避免机器上出现多份互相遮蔽的副本：
 
 ```bash

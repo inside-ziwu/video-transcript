@@ -99,6 +99,7 @@ fi
 
 if ! command -v rsync >/dev/null 2>&1; then
   err "缺少 rsync，无法安全保留已有 .env 与 outputs/"
+  err "Linux: sudo apt-get install -y rsync;macOS: brew install rsync"
   exit 1
 fi
 
