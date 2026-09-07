@@ -211,9 +211,9 @@ else
   mkdir -p "$(dirname "$VD_TARGET")"
   VD_STAGE_ROOT=$(mktemp -d)
   VD_STAGE="$VD_STAGE_ROOT/video-download"
-  if command -v git >/dev/null 2>&1 && git clone --depth=1 https://github.com/Backtthefuture/video-download.git "$VD_STAGE" 2>&1; then
+  if command -v git >/dev/null 2>&1 && git clone --depth=1 https://github.com/inside-ziwu/video-download.git "$VD_STAGE" 2>&1; then
     VD_SOURCE="$VD_STAGE"
-  elif curl -fsSL https://github.com/Backtthefuture/video-download/archive/refs/heads/main.tar.gz | tar xz -C "$VD_STAGE_ROOT" 2>&1; then
+  elif curl -fsSL https://github.com/inside-ziwu/video-download/archive/refs/heads/main.tar.gz | tar xz -C "$VD_STAGE_ROOT" 2>&1; then
     VD_SKILL_FILE=$(find "$VD_STAGE_ROOT" -maxdepth 2 -type f -name SKILL.md -print -quit)
     VD_SOURCE="${VD_SKILL_FILE:+$(dirname "$VD_SKILL_FILE")}"
   else

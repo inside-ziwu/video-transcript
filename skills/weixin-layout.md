@@ -99,7 +99,7 @@
 
 看 stderr 的 `----- VT_OUTPUTS -----` 里有没有 `video_path`。缓存命中但没有 MP4 时：
 
-- 用配套 [`video-download`](https://github.com/Backtthefuture/video-download) 只下视频，**不要**为了拿 MP4 就 `--force` 重跑识别
+- 用配套 [`video-download`](https://github.com/inside-ziwu/video-download) 只下视频，**不要**为了拿 MP4 就 `--force` 重跑识别
 - 用户明确说重跑时才加 `--force`
 
 ### 怎么抽帧

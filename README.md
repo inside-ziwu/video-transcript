@@ -30,7 +30,7 @@
 
 PDF 用 [Kami](https://github.com/tw93/Kami) 羊皮纸长文排。文件名用视频原标题（去掉话题标签）。
 
-只想保存 MP4、不要逐字稿，请说明「只下载」，会改走配套的 [`video-download`](https://github.com/Backtthefuture/video-download)。
+只想保存 MP4、不要逐字稿，请说明「只下载」，会改走配套的 [`video-download`](https://github.com/inside-ziwu/video-download)。
 
 ---
 
@@ -177,7 +177,7 @@ python3 ~/.claude/skills/video-transcript/scripts/transcript.py --doctor-live "<
 
 `--check` 只验证认证，不代表任意链接都能拿到视频流。`--doctor-live` 才会验证“认证 → 分享链接解析 → 视频详情 → 媒体流”，且不会下载或转录。
 
-只下载、不转录，请直接用 [`video-download`](https://github.com/Backtthefuture/video-download)。
+只下载、不转录，请直接用 [`video-download`](https://github.com/inside-ziwu/video-download)。
 
 </details>
 
@@ -251,7 +251,7 @@ python3 ~/.claude/skills/video-transcript/scripts/transcript.py --doctor
 | funasr 未安装 | `pip install funasr torchaudio` |
 | 首次很慢 / 联网失败 | 视频模型约 234MB，播客模型约 1GB；模型可离线复用，网络链接仍需联网 |
 | 抖音 / 小红书抓不到 | 平台改版常见，看 [FALLBACK.md](FALLBACK.md) |
-| 视频号找不到 `video-download` | 重跑 `install.sh`，或 `npx skills add Backtthefuture/video-download` |
+| 视频号找不到 `video-download` | 重跑 `install.sh`，或 `npx skills add inside-ziwu/video-download` |
 | `WECHAT_AUTH_REQUIRED` / `WECHAT_AUTH_EXPIRED` | 运行 `scripts/sph_resolver.py --login`，扫码后重试 |
 | `WECHAT_PARSE_EMPTY` / `WECHAT_PARSE_TOKEN_MISSING` | 登录已通过，但该链接没有可用解析结果；检查链接/内容权限，必要时上传 MP4/MOV |
 | `WECHAT_FEED_FAILED` / `WECHAT_STREAM_EMPTY` | 视频详情阶段没有媒体流；保留完整错误码后提 Issue，或改传本地文件 |
