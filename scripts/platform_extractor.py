@@ -164,9 +164,12 @@ def extract_douyin(url: str, headless: bool = True) -> dict:
                     if (data && data.aweme_detail && data.aweme_detail.video) {
                         const v = data.aweme_detail.video;
                         const playAddr = v.play_addr || v.play_addr_h264;
+                        const author = data.aweme_detail.author || {};
                         return {
                             success: true,
                             title: data.aweme_detail.desc || '',
+                            author: author.nickname || '',
+                            description: data.aweme_detail.desc || '',
                             video_urls: playAddr ? playAddr.url_list : [],
                             duration_ms: v.duration || 0,
                         };
@@ -191,8 +194,10 @@ def extract_douyin(url: str, headless: bool = True) -> dict:
     video_url = urls[0]
     title = (api_result.get("title") or page_title or "douyin_video").strip()
     title = re.sub(r"\s*-\s*抖音\s*$", "", title).strip()
+    author = (api_result.get("author") or "").strip()
+    description = (api_result.get("description") or "").strip()
 
-    return {
+    result = {
         "platform": "douyin",
         "title": title,
         "video_url": video_url,
@@ -202,6 +207,11 @@ def extract_douyin(url: str, headless: bool = True) -> dict:
             "User-Agent": DESKTOP_UA,
         },
     }
+    if author:
+        result["author"] = author
+    if description:
+        result["description"] = description
+    return result
 
 
 # ─── B 站 ────────────────────────────────────────────────────────

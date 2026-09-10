@@ -385,6 +385,8 @@ def probe_video(input_path):
                 "cached_info": info,
                 "direct_url": info.get("audio_url") or info.get("video_url"),
                 "headers": info.get("headers"),
+                "author": info.get("author"),
+                "description": info.get("description"),
             }
         return _ytdlp_probe(input_path)
     meta = get_video_info(input_path)
@@ -413,6 +415,7 @@ def resolve_or_probe(input_path):
             },
             "cached_info": None,
             "author": profile.get("author"),
+            "description": profile.get("description"),
             "resolver": profile.get("resolver"),
         }
     return probe_video(input_path)
@@ -435,6 +438,17 @@ def fmt_estimate_range(sec):
     if not sec:
         return "未知"
     return f"{fmt_duration_human(int(sec * 0.8))} ~ {fmt_duration_human(int(sec * 1.3))}"
+
+
+def publisher_output_fields(meta):
+    fields = {}
+    author = meta.get("author")
+    if isinstance(author, str) and author.strip():
+        fields["author"] = author
+    description = meta.get("description")
+    if isinstance(description, str) and description:
+        fields["description"] = description
+    return fields
 
 
 def print_probe_report(meta, est_sec, n_segs):
@@ -1152,6 +1166,7 @@ def run(input_path, title=None, output_dir=None, save_md=True, use_cache=True, k
             "source_url": normalize_input(input_path),
             "video_path": video_path if keep_video and video_path else None,
             "final_dir": fin_dir,
+            **publisher_output_fields(meta),
         }
         sidecar = os.path.join(out_dir, f"{stem}_outputs.json")
         with open(sidecar, "w", encoding="utf-8") as f:
