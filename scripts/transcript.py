@@ -416,6 +416,7 @@ def resolve_or_probe(input_path):
             "cached_info": None,
             "author": profile.get("author"),
             "description": profile.get("description"),
+            "stats": profile.get("stats"),
             "resolver": profile.get("resolver"),
         }
     return probe_video(input_path)
@@ -448,6 +449,12 @@ def publisher_output_fields(meta):
     description = meta.get("description")
     if isinstance(description, str) and description:
         fields["description"] = description
+    stats = meta.get("stats")
+    if isinstance(stats, dict):
+        for key in ("like", "fav", "forward", "comment"):
+            val = stats.get(key)
+            if isinstance(val, str) and val.strip():
+                fields[key] = val
     return fields
 
 
