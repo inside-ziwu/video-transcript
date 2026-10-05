@@ -114,6 +114,9 @@ def start_background(python_exe=None):
         return True
     python_exe = python_exe or sys.executable
     script = os.path.abspath(__file__)
+    log_parent = os.path.dirname(os.path.abspath(LOG_PATH))
+    if log_parent:
+        os.makedirs(log_parent, exist_ok=True)
     with open(LOG_PATH, "ab") as logf:
         subprocess.Popen(
             [python_exe, script, "--serve"],
@@ -205,7 +208,8 @@ def transcribe_with_model(model, wav_path, hotword=None):
     import re
 
     duration = _wav_duration(wav_path)
-    gen_kwargs = {"input": wav_path, "batch_size_s": 300}
+    # merge_vad 把碎 VAD 段并成约 15 秒再送模型:5 分钟音频 27s -> 10s(M5 cpu 实测),个别同音字会变,交后续纠错
+    gen_kwargs = {"input": wav_path, "batch_size_s": 300, "merge_vad": True, "merge_length_s": 15}
     if hotword:
         gen_kwargs["hotword"] = hotword
     res = model.generate(**gen_kwargs)
@@ -257,79 +261,111 @@ class _Worker:
 
 
 def serve():
+    import fcntl
+
+    sock_parent = os.path.dirname(os.path.abspath(SOCK_PATH)) or "."
+    os.makedirs(sock_parent, exist_ok=True)
+    pid_parent = os.path.dirname(os.path.abspath(PID_PATH))
+    if pid_parent:
+        os.makedirs(pid_parent, exist_ok=True)
+    lock_path = SOCK_PATH + ".lock"
+    lock_fd = open(lock_path, "a+")
+    try:
+        fcntl.flock(lock_fd.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        lock_fd.close()
+        log("[asr-daemon] already running")
+        return
+
     worker = _Worker()
     loader = threading.Thread(target=worker.load, daemon=True)
     loader.start()
 
-    _unlink(SOCK_PATH)
-    server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    server.bind(SOCK_PATH)
-    server.listen(4)
-    server.settimeout(1.0)
-    with open(PID_PATH, "w", encoding="utf-8") as f:
-        f.write(str(os.getpid()))
-    log(f"[asr-daemon] listening {SOCK_PATH} pid={os.getpid()}")
+    try:
+        _unlink(SOCK_PATH)
+        server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        server.bind(SOCK_PATH)
+        server.listen(4)
+        server.settimeout(1.0)
+        with open(PID_PATH, "w", encoding="utf-8") as f:
+            f.write(str(os.getpid()))
+        log(f"[asr-daemon] listening {SOCK_PATH} pid={os.getpid()}")
 
-    running = True
-    while running:
-        if worker.ready and (time.time() - worker.last_used) > IDLE_SEC:
-            log("[asr-daemon] idle timeout, exit")
-            break
-        try:
-            conn, _ = server.accept()
-        except socket.timeout:
-            continue
-        except OSError:
-            break
-        try:
-            req = _recv_line(conn, timeout=30)
-            if not req:
-                continue
-            cmd = req.get("cmd")
-            if cmd == "ping":
-                _send_line(conn, {
-                    "ok": True,
-                    "ready": worker.ready,
-                    "error": worker.error,
-                    "pid": os.getpid(),
-                })
-            elif cmd == "shutdown":
-                _send_line(conn, {"ok": True})
-                running = False
-            elif cmd == "transcribe":
-                if worker.error:
-                    _send_line(conn, {"ok": False, "error": worker.error})
-                elif not worker.ready:
-                    loader.join(timeout=120)
-                    if not worker.ready:
-                        _send_line(conn, {"ok": False, "error": worker.error or "模型仍在加载"})
-                        continue
+        stop = threading.Event()
+        in_flight = 0
+        count_lock = threading.Lock()
+
+        def handle(conn):
+            nonlocal in_flight
+            with count_lock:
+                in_flight += 1
+            try:
+                req = _recv_line(conn, timeout=30)
+                if not req:
+                    return
+                cmd = req.get("cmd")
+                if cmd == "ping":
+                    _send_line(conn, {
+                        "ok": True,
+                        "ready": worker.ready,
+                        "error": worker.error,
+                        "pid": os.getpid(),
+                    })
+                elif cmd == "shutdown":
+                    _send_line(conn, {"ok": True})
+                    stop.set()
+                elif cmd == "transcribe":
+                    if worker.error:
+                        _send_line(conn, {"ok": False, "error": worker.error})
+                    elif not worker.ready:
+                        loader.join(timeout=120)
+                        if not worker.ready:
+                            _send_line(conn, {"ok": False, "error": worker.error or "模型仍在加载"})
+                            return
+                    try:
+                        segs = worker.transcribe(
+                            req.get("wav"),
+                            hotword=req.get("hotword"),
+                            offset=float(req.get("offset") or 0),
+                        )
+                        _send_line(conn, {"ok": True, "segments": segs})
+                    except Exception as exc:
+                        _send_line(conn, {"ok": False, "error": str(exc)})
+                else:
+                    _send_line(conn, {"ok": False, "error": f"unknown cmd {cmd}"})
+            except Exception as exc:
                 try:
-                    segs = worker.transcribe(
-                        req.get("wav"),
-                        hotword=req.get("hotword"),
-                        offset=float(req.get("offset") or 0),
-                    )
-                    _send_line(conn, {"ok": True, "segments": segs})
-                except Exception as exc:
                     _send_line(conn, {"ok": False, "error": str(exc)})
-            else:
-                _send_line(conn, {"ok": False, "error": f"unknown cmd {cmd}"})
-        except Exception as exc:
-            try:
-                _send_line(conn, {"ok": False, "error": str(exc)})
-            except Exception:
-                pass
-        finally:
-            try:
-                conn.close()
-            except Exception:
-                pass
+                except Exception:
+                    pass
+            finally:
+                with count_lock:
+                    in_flight -= 1
+                try:
+                    conn.close()
+                except Exception:
+                    pass
 
-    server.close()
-    _unlink(SOCK_PATH)
-    _unlink(PID_PATH)
-    log("[asr-daemon] stopped")
+        while not stop.is_set():
+            with count_lock:
+                busy = in_flight > 0
+            if worker.ready and not busy and (time.time() - worker.last_used) > IDLE_SEC:
+                log("[asr-daemon] idle timeout, exit")
+                break
+            try:
+                conn, _ = server.accept()
+            except socket.timeout:
+                continue
+            except OSError:
+                break
+            threading.Thread(target=handle, args=(conn,), daemon=True).start()
+
+        server.close()
+        _unlink(SOCK_PATH)
+        _unlink(PID_PATH)
+        log("[asr-daemon] stopped")
+    finally:
+        lock_fd.close()
 
 
 def main():
