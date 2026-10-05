@@ -181,7 +181,7 @@ if [ ! -f "$ENV_FILE" ]; then
 # 例:FUNASR_HOTWORD=玉伯 优麦 YouMind WorkBuddy Codex
 # FUNASR_HOTWORD=
 
-# 可选:成品目录(支持 ~),只放最终 Markdown/PDF;原始稿/预整理/缓存固定在 skill 目录的 outputs/;不设则一并存 outputs/
+# 可选:成品目录(支持 ~),只放最终 Markdown/PDF;原始稿/预整理/缓存固定在 ~/Documents/video-transcript/;不设则一并存那里
 # 例:VT_OUTPUT_DIR=~/Documents/逐字稿
 # VT_OUTPUT_DIR=
 EOF
@@ -342,7 +342,7 @@ cat <<EOF
     或终端直接跑:
     $PYTHON_BIN $SKILL_DIR/scripts/transcript.py <URL>
 
-  逐字稿默认存到: $SKILL_DIR/outputs/
+  逐字稿默认存到: ~/Documents/video-transcript/
 
   微信视频号:
     视频号首次使用需建立本机元宝登录态

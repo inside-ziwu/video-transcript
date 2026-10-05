@@ -145,7 +145,7 @@ B 站 / 抖音 / 小红书 / YouTube / 播客不受影响,继续走后面的原�
 
 stderr 会先打 📊 评估表。**立刻复述给用户**(标题/时长/预估耗时),不要等全部跑完。
 
-长视频还会写 `$VT_HOME/outputs/.partial/<hash>/chunk_XX.md` 和 `progress.json`。
+长视频还会写 `~/Documents/video-transcript/.partial/<hash>/chunk_XX.md` 和 `progress.json`。
 转录还没结束时,你可以读已经完成的 chunk,**边转边改标题/纠错**,最后再合并进一份 patch。
 
 完成后 stderr 有 `----- VT_OUTPUTS -----` 一行 JSON,里面有:
@@ -156,7 +156,7 @@ stderr 会先打 📊 评估表。**立刻复述给用户**(标题/时长/预估
 - `video_path` — 仅 `--keep-video` 时有,截图PDF 用它抽帧
 - `stream_dir` — 分块流式目录
 - `like` / `fav` / `forward` / `comment` — 视频号点赞/收藏/转发/评论(元宝原样格式化字符串,缺失则不出该键)
-- `final_dir` — 成品目录:最终 Markdown 只放这里(`.env` 的 `VT_OUTPUT_DIR`,未设则等于 `$VT_HOME/outputs`)
+- `final_dir` — 成品目录:最终 Markdown 只放这里(`.env` 的 `VT_OUTPUT_DIR`,未设则等于 `~/Documents/video-transcript`)
 
 **若是微信视频号:到这里停,去 [`skills/weixin-layout.md`](skills/weixin-layout.md)。** 不要进入阶段 4,不要跑 `make_optimized.py`。
 
@@ -194,7 +194,7 @@ stderr 会先打 📊 评估表。**立刻复述给用户**(标题/时长/预估
 
 5. 读取生成的 `*_整理优化版.md`,**在对话里完整输出整理优化版全文**(纯 Markdown,不要用代码块包裹)
 6. 需要预览时 `present_files` 只传整理优化版 `.html`(第一位) + `.md`
-7. 末尾附一行成品落盘路径(`.md` 在 `final_dir`;`.html` 固定在 `$VT_HOME/outputs`,只用于预览)
+7. 末尾附一行成品落盘路径(`.md` 在 `final_dir`;`.html` 固定在 `~/Documents/video-transcript`,只用于预览)
 
 ### 章节很多时的并行润色
 
@@ -231,12 +231,12 @@ stderr 会先打 📊 评估表。**立刻复述给用户**(标题/时长/预估
 ```
 
 **版式不满意/人名认错时用 `--reformat`,不要用 `--force`。** `--force` 会连十几分钟的 ASR 一起重跑；
-`--reformat` 复用 `$VT_HOME/outputs/.partial/<hash>/transcription.json`,1 小时单集约 1 分钟出新版。
+`--reformat` 复用 `~/Documents/video-transcript/.partial/<hash>/transcription.json`,1 小时单集约 1 分钟出新版。
 
 小宇宙以外的播客平台(喜马拉雅/Apple Podcasts)没有音频直链,自动用 yt-dlp 取音频,
 拿不到 Shownotes,所以说话人会回退成「说话人 A/B」,想要真名就手动传 `--host` / `--guest`。
 
-**产物**:`*_逐字稿.md`(说话人区块,成品,存 `final_dir`);其余在 `$VT_HOME/outputs`:`*_逐字稿.srt`(带说话人前缀、句级时间轴,可直接压字幕)、
+**产物**:`*_逐字稿.md`(说话人区块,成品,存 `final_dir`);其余在 `~/Documents/video-transcript`:`*_逐字稿.srt`(带说话人前缀、句级时间轴,可直接压字幕)、
 `*_outputs.json`、`.partial/<hash>/transcription.json`(原始转录,`--reformat` 的输入)。
 
 **转录期间**每 30 秒打一行 `[转录中] 已跑 x 分,约 y%,预计还需 z 分`。
@@ -327,6 +327,6 @@ agent 拿到播客 `*_逐字稿.md` 后:**直接在对话里输出全文**(或�
 - 时间戳只在工作目录的原始稿 / 预整理稿里(段落级,供边转边改时定位);成品整理优化版与视频号口语稿不带时间戳
 - 预估耗时:`时长/8 + 15s`(直链音频 + 已预热模型)
 - 热词:`$VT_HOME/.env` 里 `FUNASR_HOTWORD=词1 词2`
-- 成品目录:`$VT_HOME/.env` 里 `VT_OUTPUT_DIR=~/逐字稿`(支持 `~`),只放最终 Markdown / PDF(整理优化版、播客逐字稿、视频号口语稿);原始稿、预整理、brief、html、srt、`.cache`、`.partial` 固定在 `$VT_HOME/outputs`;不设则两者相同;`--doctor` 会打印两个目录
+- 成品目录:`$VT_HOME/.env` 里 `VT_OUTPUT_DIR=~/逐字稿`(支持 `~`),只放最终 Markdown / PDF(整理优化版、播客逐字稿、视频号口语稿);原始稿、预整理、brief、html、srt、`.cache`、`.partial` 固定在 `~/Documents/video-transcript`;不设则两者相同;`--doctor` 会打印两个目录
 - ASR 转录在本地运行,不需要 API Key;链接解析和首次模型下载需要联网
 - 微信视频号三种交付见 [skills/weixin-layout.md](skills/weixin-layout.md):默认对话逐字稿;文字PDF / 截图PDF 用 Kami 羊皮纸长文;文件名用视频原标题

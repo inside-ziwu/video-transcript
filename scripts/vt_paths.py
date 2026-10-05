@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """skill 根目录、.env、工作目录与成品目录的统一解析。
 
-工作目录固定为 $VT_HOME/outputs:原始稿、预整理稿、brief、html、srt、缓存索引、分块目录都在这里。
+工作目录固定为 ~/Documents/video-transcript:原始稿、预整理稿、brief、html、srt、缓存索引、分块目录都在这里。
 成品目录只放最终 Markdown / PDF。优先级:命令行 --output-dir > 环境变量 / .env 的 VT_OUTPUT_DIR > 工作目录。
 """
 import os
@@ -28,8 +28,8 @@ def load_dotenv(path=ENV_FILE):
 
 
 def work_dir():
-    """过程文件目录,固定在 skill 目录下。"""
-    return os.path.join(SKILL_DIR, "outputs")
+    """过程文件目录,放在 skill 目录外,避免被 agent 的 skill 扫描器扫到。"""
+    return os.path.expanduser("~/Documents/video-transcript")
 
 
 def final_dir(cli_value=None):

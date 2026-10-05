@@ -372,7 +372,7 @@ def main():
     ap.add_argument("--from-md", dest="from_md", help="预整理/整理优化版 markdown")
     ap.add_argument("--patch", help="LLM 增量 patch.json,配合 --from-md")
     ap.add_argument("--filename", default=None, help="输出文件名(不含扩展名)")
-    ap.add_argument("--output-dir", default=DEFAULT_OUT, help="成品目录(.md 存放处);.html 固定写到工作目录 outputs/")
+    ap.add_argument("--output-dir", default=DEFAULT_OUT, help="成品目录(.md 存放处);.html 固定写到工作目录 ~/Documents/video-transcript")
     ap.add_argument("--dump-template", action="store_true", help="输出 content.json 骨架模板")
     args = ap.parse_args()
 

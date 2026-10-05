@@ -12,7 +12,7 @@ if SCRIPTS not in sys.path:
 
 import vt_paths  # noqa: E402
 
-WORK = os.path.join(ROOT, "outputs")
+WORK = os.path.expanduser("~/Documents/video-transcript")
 
 PRE_MD = """# 测试标题
 
@@ -36,7 +36,7 @@ PRE_MD = """# 测试标题
 
 
 class DirPriorityTest(unittest.TestCase):
-    def test_work_dir_is_fixed_under_skill(self):
+    def test_work_dir_is_fixed(self):
         with mock.patch.dict(os.environ, {vt_paths.OUTPUT_DIR_ENV: "/tmp/elsewhere"}):
             self.assertEqual(vt_paths.work_dir(), WORK)
 
