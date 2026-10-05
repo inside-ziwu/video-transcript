@@ -24,7 +24,7 @@ from vt_paths import ENV_FILE, OUTPUT_DIR_ENV, SKILL_DIR, final_dir, load_dotenv
 load_dotenv(ENV_FILE)
 DEFAULT_OUTPUT_DIR = work_dir()
 CACHE_INDEX = os.path.join(DEFAULT_OUTPUT_DIR, ".cache", "index.json")
-WORK_DIR = "/tmp/video-transcript"
+WORK_DIR = os.environ.get("VT_WORK_DIR") or "/tmp/video-transcript"
 FUNASR_HOTWORD = os.getenv("FUNASR_HOTWORD") or None
 FFMPEG_HINT = "brew install ffmpeg" if sys.platform == "darwin" else "sudo apt-get install -y ffmpeg"
 WECHAT_UA = (

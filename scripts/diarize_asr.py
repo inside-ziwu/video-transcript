@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import re
 import shutil
 import subprocess
@@ -294,11 +295,12 @@ def diarize_wav(
 def diarize_media(
     media_path: str | Path,
     *,
-    work_dir: str | Path = "/tmp/video-transcript",
+    work_dir: str | Path | None = None,
     hotword: str | None = None,
     cpu_threads: int = 4,
 ) -> tuple[list[dict[str, Any]], float]:
     """任意媒体文件 → (segments, duration_sec)。非 wav 会先转 16k 单声道。"""
+    work_dir = work_dir or os.environ.get("VT_WORK_DIR") or "/tmp/video-transcript"
     media = Path(media_path)
     duration = media_duration(media)
     if media.suffix.lower() == ".wav":
