@@ -13,6 +13,7 @@ HTTP 失败才回退到**单次** headless 浏览器(登录检查+解析合并,�
 """
 import asyncio
 import json
+import math
 import os
 import random
 import ssl
@@ -344,6 +345,49 @@ def token_eid_from_parse(parsed):
     return token, eid
 
 
+COUNT_UNITS = (("亿", 100000000), ("万", 10000), ("w", 10000), ("W", 10000), ("k", 1000), ("K", 1000))
+
+
+def parse_count(value):
+    """把互动数转成整数;拿不到确切数值就返回 None。
+
+    元宝 feedInfo 实测只给 `*CountFmt` 展示串:量小是纯数字("2081"),
+    量大是带单位的近似值("1.2万")。按单位还原成整数,精度以平台展示为准。
+    """
+    if isinstance(value, bool) or value is None:
+        return None
+    if isinstance(value, (int, float)):
+        number, multiplier = value, 1
+    elif isinstance(value, str):
+        text = value.strip().replace(",", "").replace("\uff0c", "").rstrip("+")
+        if not text:
+            return None
+        multiplier = 1
+        for unit, scale in COUNT_UNITS:
+            if text.endswith(unit):
+                multiplier = scale
+                text = text[: -len(unit)]
+                break
+        try:
+            number = float(text)
+        except ValueError:
+            return None
+    else:
+        return None
+    # "nan" / "inf" 也能被 float() 接受,但换不出整数:认不出就给 None,不能把解析器带崩。
+    if not math.isfinite(number) or number < 0:
+        return None
+    return int(round(number * multiplier))
+
+
+def stat_count(feed_info, key):
+    """优先取原始整数字段,没有再解析展示串。"""
+    raw = feed_info.get(key)
+    if raw is None:
+        raw = feed_info.get(key + "Fmt")
+    return parse_count(raw)
+
+
 def profile_from_feed(share_url, feed, resolver="yuanbao-http"):
     data = (feed or {}).get("data") or {}
     feed_info = data.get("feedInfo") or {}
@@ -365,10 +409,10 @@ def profile_from_feed(share_url, feed, resolver="yuanbao-http"):
         "duration": extract_duration(feed),
         "resolver": resolver,
         "stats": {
-            "fav": feed_info.get("favCountFmt"),
-            "like": feed_info.get("likeCountFmt"),
-            "forward": feed_info.get("forwardCountFmt"),
-            "comment": feed_info.get("commentCountFmt"),
+            "favCount": stat_count(feed_info, "favCount"),
+            "likeCount": stat_count(feed_info, "likeCount"),
+            "forwardCount": stat_count(feed_info, "forwardCount"),
+            "commentCount": stat_count(feed_info, "commentCount"),
         },
     }
 

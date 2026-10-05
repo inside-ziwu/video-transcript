@@ -155,7 +155,10 @@ stderr 会先打 📊 评估表。**立刻复述给用户**(标题/时长/预估
 - `transcript_path` — 原始逐字稿(对照存档;B站等平台不要在对话里全文展示)
 - `video_path` — 仅 `--keep-video` 时有,截图PDF 用它抽帧
 - `stream_dir` — 分块流式目录
-- `like` / `fav` / `forward` / `comment` — 视频号点赞/收藏/转发/评论(元宝原样格式化字符串,缺失则不出该键)
+- `favCount` / `likeCount` / `forwardCount` / `commentCount` — 视频号**点赞 / 推荐 / 转发 / 评论**四项互动数,整数;
+  取不到确切数值给 `null`,不省略键。注意平台字段名与语义不对应:`favCount` 是点赞,`likeCount` 是推荐。
+  元宝实测只返回展示串(`favCountFmt` 等),由本 skill 还原成整数。量小是纯数字,原样转;
+  **量大是近似值,会丢精度**:"1.2万" 还原成 `12000`,真值其实在 12000~12999 之间。排序够用,别当准确值。
 - `final_dir` — 成品目录:最终 Markdown 只放这里(`.env` 的 `VT_OUTPUT_DIR`,未设则等于 `~/Documents/video-transcript`)
 
 **若是微信视频号:到这里停,去 [`skills/weixin-layout.md`](skills/weixin-layout.md)。** 不要进入阶段 4,不要跑 `make_optimized.py`。

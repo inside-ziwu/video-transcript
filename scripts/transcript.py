@@ -451,10 +451,13 @@ def publisher_output_fields(meta):
         fields["description"] = description
     stats = meta.get("stats")
     if isinstance(stats, dict):
-        for key in ("like", "fav", "forward", "comment"):
+        # 互动数语义:favCount=点赞、likeCount=推荐、
+        # forwardCount=转发、commentCount=评论。缺数显式给 null,不省略键。
+        for key in ("favCount", "likeCount", "forwardCount", "commentCount"):
+            if key not in stats:
+                continue
             val = stats.get(key)
-            if isinstance(val, str) and val.strip():
-                fields[key] = val
+            fields[key] = val if isinstance(val, int) and not isinstance(val, bool) else None
     return fields
 
 
