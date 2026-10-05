@@ -210,6 +210,8 @@ class InstallerInvariantTests(unittest.TestCase):
                           *sys.version_info.major*) echo '3.12.0' ;;
                           *'print(1 if sys.version_info'*) echo '1' ;;
                           *'import playwright'*) exit 0 ;;
+                          *'import torch, torchaudio, funasr'*) exit 0 ;;
+                          *'print(torch.__version__)'*) echo '0.0-stub' ;;
                           *) exec {real_python} "$@" ;;
                         esac
                         ;;
